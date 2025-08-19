@@ -1,6 +1,6 @@
 {
 	"devDependencies": {
-		"@types/node": "^24.2.1"
+		"@types/node": "^24.0.0"
 	},
 	"packageManager": "pnpm@10.14.0"
 }
