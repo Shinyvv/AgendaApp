@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 /// Servicio de autenticación centralizado
 class AuthService {
@@ -51,6 +52,32 @@ class AuthService {
       );
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  /// Iniciar sesión con Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      
+      UserCredential userCredential;
+      
+      if (kIsWeb) {
+        // For web, use signInWithPopup
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        // For mobile, use signInWithProvider
+        userCredential = await _auth.signInWithProvider(googleProvider);
+      }
+
+      // Guardar información del usuario en Firestore
+      if (userCredential.user != null) {
+        await _saveUserToFirestore(userCredential.user!);
+      }
+
+      return userCredential;
+    } catch (e) {
+      throw 'Error al iniciar sesión con Google: ${e.toString()}';
     }
   }
 

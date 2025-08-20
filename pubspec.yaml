@@ -30,6 +30,7 @@ dependencies:
   # Notificaciones
   flutter_local_notifications: ^19.4.0
   timezone: ^0.10.1
+  google_sign_in: ^7.1.1
 
 dev_dependencies:
   flutter_test:
