@@ -59,10 +59,10 @@ class _GoogleSignInButtonState extends ConsumerState<GoogleSignInButton> {
             height: 20,
             child: CircularProgressIndicator(strokeWidth: 2),
           )
-        : Image.network(
-            'https://developers.google.com/identity/images/g-logo.png',
-            height: 20,
-            width: 20,
+        : const Icon(
+            Icons.g_mobiledata,
+            size: 24,
+            color: Colors.blue,
           ),
       label: Text(_loading ? 'Iniciando sesión...' : 'Continuar con Google'),
     );
