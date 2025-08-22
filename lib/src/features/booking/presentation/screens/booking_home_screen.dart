@@ -52,7 +52,7 @@ class BookingHomeScreen extends ConsumerWidget {
                         currentUser.email ?? '',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -75,7 +75,12 @@ class BookingHomeScreen extends ConsumerWidget {
                 if (value == 'logout') {
                   await _showLogoutDialog(context, ref);
                 } else if (value == 'profile') {
-                  // TODO: Navigate to profile
+                  // Show profile placeholder
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Perfil próximamente disponible'),
+                    ),
+                  );
                 }
               },
               itemBuilder: (BuildContext context) => [

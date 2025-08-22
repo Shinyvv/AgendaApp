@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 /// Servicio para manejar usuarios y roles
@@ -9,6 +10,13 @@ class UserService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   static const String _usersCollection = 'users';
+
+  /// Helper para logging condicional solo en debug
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint('🔧 UserService: $message');
+    }
+  }
 
   /// Obtener datos del usuario actual desde Firestore
   Stream<AppUser?> getCurrentUserData() {
@@ -25,27 +33,100 @@ class UserService {
         });
   }
 
-  /// Crear o actualizar usuario en Firestore
+  /// Crear o actualizar usuario en Firestore con retry
   Future<void> createOrUpdateUser(AppUser user) async {
-    await _firestore
-        .collection(_usersCollection)
-        .doc(user.uid)
-        .set(user.toJson(), SetOptions(merge: true));
+    _debugLog('=== INICIANDO createOrUpdateUser ===');
+    _debugLog('Usuario: ${user.uid} (${user.email})');
+    _debugLog('Rol: ${user.role}');
+
+    int maxRetries = 3;
+    int currentRetry = 0;
+
+    while (currentRetry < maxRetries) {
+      try {
+        _debugLog('🔄 Intento ${currentRetry + 1} de $maxRetries');
+
+        // Test connectivity first
+        _debugLog('🌐 Verificando conectividad con Firestore...');
+        await _firestore.enableNetwork();
+        _debugLog('✅ Red habilitada');
+
+        // Perform the operation with extended timeout
+        _debugLog('💾 Escribiendo documento con ID: ${user.uid}');
+        await _firestore
+            .collection(_usersCollection)
+            .doc(user.uid)
+            .set(user.toJson(), SetOptions(merge: true))
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () {
+                _debugLog('❌ TIMEOUT en set() - Intento ${currentRetry + 1}');
+                throw 'timeout_firestore_set';
+              },
+            );
+
+        _debugLog('✅ createOrUpdateUser completado exitosamente');
+        return; // Success - exit retry loop
+      } catch (e) {
+        currentRetry++;
+        _debugLog('❌ Error en intento $currentRetry: $e');
+
+        if (currentRetry >= maxRetries) {
+          _debugLog('💀 Agotados todos los intentos ($maxRetries)');
+          rethrow; // Use rethrow instead of throw e
+        }
+
+        // Wait before retry
+        int waitTime = currentRetry * 2; // Progressive backoff: 2s, 4s, 6s
+        _debugLog('⏳ Esperando ${waitTime}s antes del siguiente intento...');
+        await Future.delayed(Duration(seconds: waitTime));
+      }
+    }
   }
 
   /// Cambiar rol de usuario (y crear usuario si no existe)
   Future<void> changeUserRole(String userId, UserRole newRole) async {
+    _debugLog('=== INICIANDO CAMBIO DE ROL ===');
+    _debugLog('UserId: $userId');
+    _debugLog('Nuevo rol: ${newRole.name}');
+
     try {
-      // Intentar actualizar el documento existente
-      await _firestore.collection(_usersCollection).doc(userId).update({
-        'role': newRole.name,
-      });
+      _debugLog('Intentando actualizar documento existente...');
+      _debugLog('Colección: $_usersCollection');
+      _debugLog('Documento ID: $userId');
+
+      // Intentar actualizar el documento existente con timeout
+      await _firestore
+          .collection(_usersCollection)
+          .doc(userId)
+          .update({
+            'role': newRole.name,
+            'lastSignIn': DateTime.now().toIso8601String(),
+          })
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              _debugLog(
+                '⚠️ TIMEOUT en update - documento probablemente no existe',
+              );
+              throw 'timeout_update';
+            },
+          );
+
+      _debugLog(
+        '✅ Documento actualizado exitosamente con rol: ${newRole.name}',
+      );
     } catch (e) {
-      print('Error al actualizar rol, creando usuario: $e');
+      _debugLog('⚠️ Error al actualizar rol: $e');
+      _debugLog('🔧 Intentando crear usuario desde Firebase Auth...');
 
       // Si el documento no existe, crear el usuario desde Firebase Auth
       final firebaseUser = _auth.currentUser;
+      _debugLog('🔧 Firebase User obtenido: ${firebaseUser?.uid}');
+      _debugLog('🔧 Email del Firebase User: ${firebaseUser?.email}');
+
       if (firebaseUser != null && firebaseUser.uid == userId) {
+        _debugLog('🔧 IDs coinciden, creando AppUser...');
         final appUser = AppUser(
           uid: firebaseUser.uid,
           email: firebaseUser.email!,
@@ -57,12 +138,29 @@ class UserService {
           isActive: true,
         );
 
-        await createOrUpdateUser(appUser);
-        print('Usuario creado con rol: ${newRole.name}');
+        _debugLog('🔧 AppUser creado: ${appUser.toString()}');
+        _debugLog('🔧 Llamando createOrUpdateUser con timeout...');
+
+        await createOrUpdateUser(appUser).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            _debugLog('❌ TIMEOUT en createOrUpdateUser');
+            throw 'timeout_create';
+          },
+        );
+
+        _debugLog('✅ Usuario creado exitosamente con rol: ${newRole.name}');
       } else {
-        throw 'No se pudo crear el usuario: Firebase Auth user no encontrado';
+        _debugLog(
+          '❌ ERROR - Firebase Auth user no encontrado o UIDs no coinciden',
+        );
+        _debugLog('❌ Firebase User UID: ${firebaseUser?.uid}');
+        _debugLog('❌ Expected UID: $userId');
+        throw 'No se pudo crear el usuario: Firebase Auth user no encontrado o UIDs no coinciden';
       }
     }
+
+    _debugLog('🏁 === CAMBIO DE ROL COMPLETADO ===');
   }
 
   /// Obtener todos los trabajadores
@@ -172,7 +270,7 @@ final isWorkerProvider = Provider<bool>((ref) {
   return currentUser.when(
     data: (user) => user?.isWorker ?? false,
     loading: () => false,
-    error: (_, __) => false,
+    error: (_, _) => false,
   );
 });
 
@@ -182,7 +280,7 @@ final isRegularUserProvider = Provider<bool>((ref) {
   return currentUser.when(
     data: (user) => user?.isUser ?? true,
     loading: () => true,
-    error: (_, __) => true,
+    error: (_, _) => true,
   );
 });
 

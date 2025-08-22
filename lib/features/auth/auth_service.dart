@@ -68,9 +68,8 @@ class AuthService {
         googleProvider.addScope('email');
         final userCredential = await _auth.signInWithPopup(googleProvider);
 
-        if (userCredential.user != null) {
-          await _userService.createUserFromFirebaseAuth(userCredential.user!);
-        }
+        // Usuario será creado en role_selection_screen con el rol correcto
+        // No crear aquí para evitar operaciones duplicadas de Firestore
 
         return userCredential;
       } else {
@@ -108,10 +107,8 @@ class AuthService {
           final UserCredential userCredential = await _auth
               .signInWithCredential(credential);
 
-          // Crear o actualizar usuario en Firestore
-          if (userCredential.user != null) {
-            await _userService.createUserFromFirebaseAuth(userCredential.user!);
-          }
+          // Usuario será creado en role_selection_screen con el rol correcto
+          // No crear aquí para evitar operaciones duplicadas de Firestore
 
           return userCredential;
         } catch (e) {
@@ -176,6 +173,6 @@ final currentUserProvider = Provider<User?>((ref) {
   return authState.when(
     data: (user) => user,
     loading: () => null,
-    error: (_, __) => null,
+    error: (_, _) => null,
   );
 });

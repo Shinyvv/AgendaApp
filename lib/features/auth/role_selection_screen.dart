@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../../src/models/user_model.dart';
 import '../../src/services/user_service.dart';
@@ -18,34 +19,74 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   UserRole? selectedRole;
   bool isLoading = false;
 
+  /// Helper para logging condicional solo en debug
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint('🎯 RoleSelection: $message');
+    }
+  }
+
   Future<void> _selectRole(UserRole role) async {
     if (isLoading) return;
 
-    print('Seleccionando rol: $role');
+    _debugLog('=== INICIANDO SELECCIÓN DE ROL ===');
+    _debugLog('Rol seleccionado: $role');
+    _debugLog('Estado de carga actual: $isLoading');
+
     setState(() {
       selectedRole = role;
       isLoading = true;
     });
+    _debugLog(
+      'Estado actualizado - selectedRole: $selectedRole, isLoading: $isLoading',
+    );
 
     try {
       final user = ref.read(authServiceProvider).currentUser;
-      print('Usuario actual: ${user?.uid}');
+      _debugLog('Usuario actual obtenido: ${user?.uid}');
+      _debugLog('Email del usuario: ${user?.email}');
+
       if (user != null) {
+        _debugLog('Obteniendo UserService...');
         final userService = ref.read(userServiceProvider);
-        print('Cambiando rol a: ${role.name}');
+
+        _debugLog(
+          'Llamando changeUserRole con UID: ${user.uid}, Rol: ${role.name}',
+        );
         await userService.changeUserRole(user.uid, role);
-        print('Rol cambiado exitosamente');
+        _debugLog('✅ changeUserRole completado exitosamente');
+
+        _debugLog('🔄 Invalidando currentAppUserProvider...');
+        // Forzar actualización del provider
+        ref.invalidate(currentAppUserProvider);
+
+        _debugLog('⏳ Esperando 500ms para sincronización con Firestore...');
+        // Pequeña pausa para asegurar que Firestore se actualice
+        await Future.delayed(const Duration(milliseconds: 500));
 
         // Navegar a la pantalla principal según el rol
         if (mounted) {
-          print('Navegando a dashboard');
+          _debugLog('🚀 Widget montado, navegando a /dashboard');
+          _debugLog('🚀 Ejecutando context.go(\'/dashboard\')...');
           context.go('/dashboard');
+          _debugLog('✅ Navegación completada');
+        } else {
+          _debugLog('⚠️ Widget NO está montado, saltando navegación');
         }
       } else {
-        print('Error: Usuario no encontrado');
+        _debugLog('❌ ERROR - Usuario Firebase es null');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Usuario no encontrado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      print('Error al seleccionar rol: $e');
+      _debugLog('❌ EXCEPCIÓN CAPTURADA: $e');
+      _debugLog('❌ Stack trace: ${StackTrace.current}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -55,9 +96,14 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         );
       }
     } finally {
+      _debugLog('🏁 === ENTRANDO A BLOQUE FINALLY ===');
       if (mounted) {
         setState(() => isLoading = false);
+        _debugLog('🏁 Estado de carga establecido a false');
+      } else {
+        _debugLog('🏁 Widget no montado en finally');
       }
+      _debugLog('🏁 === PROCESO COMPLETADO ===');
     }
   }
 
@@ -167,7 +213,7 @@ class _RoleCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, size: 32, color: color),

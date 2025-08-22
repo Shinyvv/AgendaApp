@@ -14,7 +14,7 @@ class RoleSwitcher extends ConsumerWidget {
 
     return currentUser.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (user) {
         if (user == null) return const SizedBox.shrink();
 
@@ -113,7 +113,7 @@ class CurrentRoleIndicator extends ConsumerWidget {
 
     return currentUser.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (user) {
         if (user == null) return const SizedBox.shrink();
 

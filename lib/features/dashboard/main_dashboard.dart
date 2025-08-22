@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../src/services/user_service.dart';
 import '../../src/models/user_model.dart';
 import 'user_dashboard.dart';
 import 'worker_dashboard.dart';
 import '../auth/role_selection_screen.dart';
-import '../auth/auth_service.dart';
 
 /// Pantalla principal que redirige según el rol del usuario
 class MainDashboard extends ConsumerWidget {
   const MainDashboard({super.key});
 
+  /// Helper para logging condicional solo en debug
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint('📱 MainDashboard: $message');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    _debugLog('=== BUILD INICIADO ===');
     final currentUser = ref.watch(currentAppUserProvider);
+    _debugLog('Provider estado: ${currentUser.runtimeType}');
 
     return currentUser.when(
       loading: () {
-        print('MainDashboard: Cargando usuario...');
+        _debugLog('Estado LOADING - Mostrando spinner');
         return const Scaffold(
           body: Center(
             child: Column(
@@ -32,7 +41,8 @@ class MainDashboard extends ConsumerWidget {
         );
       },
       error: (error, stackTrace) {
-        print('MainDashboard: Error al cargar usuario: $error');
+        _debugLog('Estado ERROR: $error');
+        _debugLog('Stack trace: $stackTrace');
         return Scaffold(
           body: Center(
             child: Column(
@@ -52,7 +62,19 @@ class MainDashboard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () => ref.refresh(currentAppUserProvider),
+                  onPressed: () {
+                    _debugLog('Usuario presionó Reintentar');
+                    // Invalidar el provider para forzar recarga
+                    ref.invalidate(currentAppUserProvider);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Recargando perfil...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
                   child: const Text('Reintentar'),
                 ),
               ],
@@ -61,43 +83,29 @@ class MainDashboard extends ConsumerWidget {
         );
       },
       data: (user) {
-        print('MainDashboard: Usuario cargado: $user');
+        _debugLog('=== ESTADO DATA ===');
+        _debugLog('Usuario recibido: $user');
+        _debugLog('Usuario es null: ${user == null}');
+
         if (user == null) {
-          print('MainDashboard: Usuario es null, mostrando selección de rol');
-
-          // Si el usuario está autenticado en Firebase pero no existe en Firestore,
-          // crear el usuario automáticamente y mostrar selección de rol
-          final firebaseUser = ref.read(authServiceProvider).currentUser;
-          if (firebaseUser != null) {
-            print(
-              'MainDashboard: Usuario autenticado en Firebase pero sin documento en Firestore',
-            );
-            // Crear el usuario en Firestore en background
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              try {
-                final userService = ref.read(userServiceProvider);
-                await userService.createUserFromFirebaseAuth(firebaseUser);
-                print(
-                  'MainDashboard: Usuario creado en Firestore automáticamente',
-                );
-              } catch (e) {
-                print(
-                  'MainDashboard: Error al crear usuario automáticamente: $e',
-                );
-              }
-            });
-          }
-
-          // Usuario no existe en Firestore, redirigir a selección de rol
+          _debugLog('Usuario es null -> Mostrando RoleSelectionScreen');
+          // Usuario no existe en Firestore, mostrar selección de rol
           return const RoleSelectionScreen();
         }
 
-        print('MainDashboard: Redirigiendo según rol: ${user.role}');
+        _debugLog('Usuario válido encontrado');
+        _debugLog('UID: ${user.uid}');
+        _debugLog('Email: ${user.email}');
+        _debugLog('Rol: ${user.role}');
+        _debugLog('🚀 Redirigiendo según rol: ${user.role}');
+
         // Redirigir según el rol
         switch (user.role) {
           case UserRole.usuario:
+            _debugLog('👤 Navegando a UserDashboard');
             return const UserDashboard();
           case UserRole.trabajador:
+            _debugLog('🔧 Navegando a WorkerDashboard');
             return const WorkerDashboard();
         }
       },

@@ -160,7 +160,7 @@ class PermissionDemo extends ConsumerWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
