@@ -31,8 +31,9 @@ Una aplicación completa de gestión de citas desarrollada con Flutter, Firebase
 - **Dart SDK**: Incluido con Flutter
 - **Java JDK**: 17 (configurado en `JAVA_HOME`)
 - **Android SDK**: API 31+ (para desarrollo Android)
-- **Node.js**: 16+ (para Firebase CLI)
-- **Firebase CLI**: `npm install -g firebase-tools`
+- **Node.js**: 24.6.0 o superior (Functions requieren Node 22+)
+- **pnpm**: 10.14.0 o superior (Package manager del proyecto)
+- **Firebase CLI**: Instalado globalmente con pnpm
 - **Git**: Para control de versiones
 
 ### 🔧 **Configuración del Sistema**
@@ -44,7 +45,12 @@ flutter doctor
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 
-# Verificar Firebase CLI
+# Verificar Node.js y pnpm
+node --version    # Debería mostrar v24.6.0+
+pnpm --version    # Debería mostrar 10.14.0+
+
+# Instalar Firebase CLI globalmente
+pnpm add -g firebase-tools
 firebase --version
 ```
 
@@ -61,10 +67,13 @@ cd AgendaApp
 # Dependencias de Flutter
 flutter pub get
 
-# Dependencias de Cloud Functions (opcional)
+# Dependencias de Cloud Functions con pnpm
 cd functions
-npm install
+pnpm install
 cd ..
+
+# Verificar que pnpm workspace esté configurado
+pnpm list --depth=0
 ```
 
 ### **PASO 3: Iniciar Firebase Emulators** 🔥
@@ -175,6 +184,11 @@ AgendaApp/
 ├── web/
 │   └── index.html                      # Config web + Google Sign-In
 ├── functions/                          # Cloud Functions (TypeScript)
+│   ├── package.json                    # Node.js 22, pnpm dependencies
+│   └── src/
+├── package.json                        # Workspace raíz (pnpm@10.14.0)
+├── pnpm-workspace.yaml                 # Configuración workspace pnpm
+├── pnpm-lock.yaml                      # Lock file de pnpm
 ├── firebase.json                       # Config Firebase
 ├── firestore.rules                     # Reglas de seguridad
 └── vercel.json                        # Config para deploy web
@@ -183,6 +197,12 @@ AgendaApp/
 ## 📋 Changelog del Último Commit
 
 ### 🔧 **Cambios Técnicos Realizados**
+
+#### **Configuración del Proyecto**
+- ✅ **Package Manager**: pnpm@10.14.0 configurado como gestor oficial
+- ✅ **Node.js**: v24.6.0 sistema, Node.js 22+ para Functions
+- ✅ **Workspace**: pnpm-workspace.yaml con configuración optimizada
+- ✅ **Dependencies**: Manejo especializado para @firebase/util y protobufjs
 
 #### **Sistema de Autenticación**
 - ✅ **AuthService**: Servicio centralizado con Firebase Auth
@@ -295,13 +315,34 @@ flutter devices
 
 ### **Error: "Build Failed - Gradle"**
 ```bash
-# Limpiar proyecto
+# Limpiar proyecto Flutter
 flutter clean
 cd android && ./gradlew clean && cd ..
 flutter pub get
 
+# Limpiar dependencias de pnpm si es necesario
+cd functions
+pnpm install --frozen-lockfile
+cd ..
+
 # Rebuild
 flutter run
+```
+
+### **Error: "pnpm Dependencies Issues"**
+```bash
+# Verificar configuración de pnpm
+pnpm --version  # Debe ser 10.14.0+
+cat package.json | grep packageManager
+
+# Reinstalar dependencias
+pnpm install --frozen-lockfile
+
+# En Cloud Functions
+cd functions
+pnpm install
+pnpm run build
+cd ..
 ```
 
 ## 📞 Soporte y Contribución
