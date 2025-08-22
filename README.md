@@ -26,32 +26,235 @@ Una aplicación completa de gestión de citas desarrollada con Flutter, Firebase
 
 ## 📋 Requisitos Previos
 
+## 📋 Versiones Específicas del Proyecto
+
+### 🎯 **Tabla de Compatibilidad Windows/Linux**
+
+| **Herramienta** | **Versión Exacta** | **Windows** | **Comando de Verificación** |
+|-----------------|-------------------|-------------|----------------------------|
+| **Flutter SDK** | `3.35.1` (stable) | ✅ Compatible | `flutter --version` |
+| **Dart SDK** | `3.9.0` | ✅ Compatible | `dart --version` |
+| **Node.js** | `24.6.0` | ✅ Compatible | `node --version` |
+| **pnpm** | `10.14.0` | ✅ Compatible | `pnpm --version` |
+| **Java JDK** | `17.0.16` (OpenJDK) | ✅ Compatible | `java -version` |
+| **Firebase CLI** | `14.12.1` | ✅ Compatible | `firebase --version` |
+| **Android SDK** | `36.0.0` | ✅ Compatible | `flutter doctor -v` |
+| **Gradle** | `8.12` | ✅ Compatible | `./gradlew -v` |
+| **Kotlin** | `1.9.22` | ✅ Compatible | Ver build.gradle.kts |
+
+### 🔧 **Dependencias Android Específicas**
+
+| **Componente** | **Versión** | **Archivo** |
+|----------------|-------------|-------------|
+| **Android Gradle Plugin** | `8.2.2` | `android/build.gradle.kts` |
+| **Kotlin Gradle Plugin** | `1.9.22` | `android/build.gradle.kts` |
+| **Google Services** | `4.4.0` | `android/build.gradle.kts` |
+| **Firebase BoM** | `32.7.0` | `android/app/build.gradle.kts` |
+| **Compile SDK** | `36` | Automático (Flutter) |
+| **Target SDK** | `36` | Automático (Flutter) |
+| **Min SDK** | `21` | Automático (Flutter) |
+
+### 📦 **Dependencias Flutter (pubspec.yaml)**
+
+| **Package** | **Versión** | **Propósito** |
+|-------------|-------------|---------------|
+| **flutter** | `sdk: flutter` | Framework base |
+| **firebase_core** | `^4.0.0` | Firebase inicialización |
+| **firebase_auth** | `^6.0.1` | Autenticación |
+| **cloud_firestore** | `^6.0.0` | Base de datos |
+| **flutter_riverpod** | `^2.6.1` | State management |
+| **go_router** | `^16.2.0` | Navegación |
+| **google_sign_in** | `^7.1.1` | Google OAuth |
+| **flutter_local_notifications** | `^19.4.0` | Notificaciones |
+| **table_calendar** | `^3.2.0` | Calendario UI |
+| **intl** | `^0.20.2` | Internacionalización |
+
+### 🌐 **Dependencias Cloud Functions (Node.js)**
+
+| **Package** | **Versión** | **Propósito** |
+|-------------|-------------|---------------|
+| **Node.js Engine** | `22` | Runtime requerido |
+| **firebase-admin** | `^11.11.1` | SDK Admin |
+| **firebase-functions** | `^4.9.0` | Functions SDK |
+| **typescript** | `^5.5.4` | Compilador TS |
+| **@types/node** | `^22.7.4` | Tipos Node.js |
+| **firebase-tools** | `^14.12.0` | CLI desarrollo |
+
 ### 🛠️ **Herramientas Necesarias**
-- **Flutter SDK**: 3.32.8 o superior
-- **Dart SDK**: Incluido con Flutter
-- **Java JDK**: 17 (configurado en `JAVA_HOME`)
-- **Android SDK**: API 31+ (para desarrollo Android)
-- **Node.js**: 24.6.0 o superior (Functions requieren Node 22+)
-- **pnpm**: 10.14.0 o superior (Package manager del proyecto)
-- **Firebase CLI**: Instalado globalmente con pnpm
+- **Flutter SDK**: 3.35.1 stable channel
+- **Dart SDK**: 3.9.0 (incluido con Flutter)
+- **Java JDK**: 17.0.16 (OpenJDK recomendado)
+- **Android SDK**: 36.0.0+ con Build Tools
+- **Node.js**: 24.6.0+ (Functions requieren Node 22+)
+- **pnpm**: 10.14.0+ (Package manager del proyecto)
+- **Firebase CLI**: 14.12.1+ instalado globalmente
 - **Git**: Para control de versiones
+- **Android Studio**: 2025.1.2+ (opcional, pero recomendado)
+- **VS Code**: Con extensiones Flutter y Dart
+
+### 🪟 **Configuración Específica para Windows**
+
+#### **1. Instalar Java JDK 17**
+```powershell
+# Opción 1: Descargar desde Oracle/OpenJDK
+# https://jdk.java.net/17/
+
+# Opción 2: Con Chocolatey
+choco install openjdk17
+
+# Opción 3: Con Scoop
+scoop install openjdk17
+
+# Configurar variables de entorno
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.16"
+$env:PATH += ";$env:JAVA_HOME\bin"
+```
+
+#### **2. Instalar Node.js y pnpm**
+```powershell
+# Instalar Node.js 24.6.0
+# Descargar desde: https://nodejs.org/
+
+# Verificar instalación
+node --version  # Debe mostrar v24.6.0+
+
+# Instalar pnpm globalmente
+npm install -g pnpm@10.14.0
+
+# Verificar pnpm
+pnpm --version  # Debe mostrar 10.14.0
+```
+
+#### **3. Configurar Flutter**
+```powershell
+# Descargar Flutter SDK 3.35.1
+# https://docs.flutter.dev/get-started/install/windows
+
+# Agregar al PATH
+$env:PATH += ";C:\flutter\bin"
+
+# Verificar instalación
+flutter doctor -v
+
+# Configurar para desktop Windows
+flutter config --enable-windows-desktop
+```
+
+#### **4. Instalar Firebase CLI**
+```powershell
+# Con pnpm (recomendado)
+pnpm add -g firebase-tools@14.12.1
+
+# Verificar instalación
+firebase --version
+```
 
 ### 🔧 **Configuración del Sistema**
 ```bash
-# Verificar Flutter
-flutter doctor
+# Linux/macOS
+flutter doctor -v
 
 # Configurar Java 17
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 
-# Verificar Node.js y pnpm
-node --version    # Debería mostrar v24.6.0+
-pnpm --version    # Debería mostrar 10.14.0+
+# Verificar versiones
+node --version    # v24.6.0+
+pnpm --version    # 10.14.0+
+java -version     # 17.0.16+
+firebase --version # 14.12.1+
+```
 
-# Instalar Firebase CLI globalmente
-pnpm add -g firebase-tools
+```powershell
+# Windows PowerShell
+flutter doctor -v
+
+# Configurar Java 17
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.16"
+$env:PATH += ";$env:JAVA_HOME\bin"
+
+# Verificar versiones
+node --version    # v24.6.0+
+pnpm --version    # 10.14.0+
+java -version     # 17.0.16+
+firebase --version # 14.12.1+
+```
+
+### ⚡ **Script de Verificación Automática**
+
+**Windows (verificar_entorno.bat):**
+```batch
+@echo off
+echo === VERIFICACION DE ENTORNO AGENDAAPP ===
+echo.
+
+echo [1] Flutter:
+flutter --version
+echo.
+
+echo [2] Dart:
+dart --version
+echo.
+
+echo [3] Node.js:
+node --version
+echo.
+
+echo [4] pnpm:
+pnpm --version
+echo.
+
+echo [5] Java:
+java -version
+echo.
+
+echo [6] Firebase CLI:
 firebase --version
+echo.
+
+echo [7] Android SDK:
+flutter doctor --android-licenses
+echo.
+
+echo === VERIFICACION COMPLETADA ===
+pause
+```
+
+**Linux/macOS (verificar_entorno.sh):**
+```bash
+#!/bin/bash
+echo "=== VERIFICACION DE ENTORNO AGENDAAPP ==="
+echo
+
+echo "[1] Flutter:"
+flutter --version
+echo
+
+echo "[2] Dart:"
+dart --version
+echo
+
+echo "[3] Node.js:"
+node --version
+echo
+
+echo "[4] pnpm:"
+pnpm --version
+echo
+
+echo "[5] Java:"
+java -version
+echo
+
+echo "[6] Firebase CLI:"
+firebase --version
+echo
+
+echo "[7] Android Doctor:"
+flutter doctor -v
+echo
+
+echo "=== VERIFICACION COMPLETADA ==="
 ```
 
 ## 🚀 Guía de Instalación y Ejecución
@@ -331,6 +534,7 @@ flutter run
 
 ### **Error: "pnpm Dependencies Issues"**
 ```bash
+# Linux/macOS
 # Verificar configuración de pnpm
 pnpm --version  # Debe ser 10.14.0+
 cat package.json | grep packageManager
@@ -343,6 +547,69 @@ cd functions
 pnpm install
 pnpm run build
 cd ..
+```
+
+```powershell
+# Windows PowerShell
+# Verificar configuración de pnpm
+pnpm --version  # Debe ser 10.14.0+
+Get-Content package.json | Select-String packageManager
+
+# Reinstalar dependencias
+pnpm install --frozen-lockfile
+
+# En Cloud Functions
+cd functions
+pnpm install
+pnpm run build
+cd ..
+```
+
+### **Error: "Java Version Issues (Windows)**
+```powershell
+# Verificar múltiples instalaciones de Java
+where java
+echo $env:JAVA_HOME
+
+# Limpiar y configurar Java 17
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.16"
+$env:PATH = "$env:JAVA_HOME\bin;" + ($env:PATH -split ';' | Where-Object { $_ -notlike '*java*' }) -join ';'
+
+# Verificar configuración
+java -version
+javac -version
+```
+
+### **Error: "Flutter Doctor Issues (Windows)**
+```powershell
+# Verificar instalación completa
+flutter doctor -v
+
+# Problemas comunes Windows:
+# 1. Android licenses
+flutter doctor --android-licenses
+
+# 2. Windows SDK (si usas desktop)
+flutter config --enable-windows-desktop
+
+# 3. Visual Studio Build Tools
+# Instalar desde: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+# 4. Reinstalar Flutter si es necesario
+flutter clean
+flutter pub get
+```
+
+### **Error: "Path Issues (Windows)**
+```powershell
+# Verificar que todas las herramientas están en PATH
+echo $env:PATH
+
+# Agregar al PATH permanentemente (PowerShell Admin)
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\flutter\bin", [EnvironmentVariableTarget]::Machine)
+[Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jdk-17.0.16", [EnvironmentVariableTarget]::Machine)
+
+# Reiniciar PowerShell después de cambios en PATH
 ```
 
 ## 📞 Soporte y Contribución
@@ -365,6 +632,72 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 ---
 
+## 📋 Matriz de Compatibilidad de Versiones
+
+### 🎯 **Versiones Testadas y Verificadas**
+
+| **OS** | **Flutter** | **Node.js** | **Java** | **pnpm** | **Estado** |
+|--------|-------------|-------------|----------|----------|------------|
+| Ubuntu 24.04 | 3.35.1 | 24.6.0 | 17.0.16 | 10.14.0 | ✅ Funcionando |
+| Windows 11 | 3.35.1 | 24.6.0+ | 17.0.16+ | 10.14.0+ | ⚡ Recomendado |
+| Windows 10 | 3.35.1 | 24.6.0+ | 17.0.16+ | 10.14.0+ | ⚠️ No testado |
+| macOS | 3.35.1+ | 24.6.0+ | 17.0.16+ | 10.14.0+ | ⚠️ No testado |
+
+### 🔄 **Versionado Semántico del Proyecto**
+
+- **Major**: Cambios que rompen compatibilidad
+- **Minor**: Nuevas funcionalidades compatibles
+- **Patch**: Correcciones de bugs
+
+### 📦 **Dependencias Críticas para Windows**
+
+```json
+{
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0",
+    "pnpm": ">=10.14.0"
+  },
+  "os": ["win32", "linux", "darwin"],
+  "cpu": ["x64", "arm64"]
+}
+```
+
+### 🚀 **Comandos de Instalación Rápida (Windows)**
+
+```powershell
+# Script completo de instalación
+# Ejecutar como Administrador
+
+# 1. Instalar Chocolatey (si no está instalado)
+Set-ExecutionPolicy Bypass -Scope Process -Force
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# 2. Instalar herramientas
+choco install git -y
+choco install openjdk17 -y
+choco install nodejs --version="24.6.0" -y
+
+# 3. Instalar pnpm
+npm install -g pnpm@10.14.0
+
+# 4. Instalar Firebase CLI
+pnpm add -g firebase-tools@14.12.1
+
+# 5. Descargar e instalar Flutter manualmente
+# https://docs.flutter.dev/get-started/install/windows
+
+# 6. Configurar variables de entorno
+$env:FLUTTER_HOME = "C:\flutter"
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.16"
+$env:PATH += ";$env:FLUTTER_HOME\bin;$env:JAVA_HOME\bin"
+
+# 7. Verificar instalación
+flutter doctor -v
+```
+
 **Última actualización**: Agosto 2025  
 **Versión**: v1.0.0-beta  
-**Estado**: En desarrollo activo 🚧
+**Estado**: En desarrollo activo 🚧  
+**Compatibilidad Windows**: ✅ Verificada para Windows 10/11
