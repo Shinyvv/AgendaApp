@@ -43,4 +43,25 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-node_modules
+
+# Node.js dependencies
+node_modules/
+.pnpm/
+
+# Firebase logs
+firebase-debug.log
+firestore-debug.log
+
+# Build outputs
+/android/app/build/
+/android/build/
+
+# Generated files
+/dataconnect-generated/
+
+# Test files
+temp_google_test/
+test_google_api.dart
+
+# Local config
+local.properties

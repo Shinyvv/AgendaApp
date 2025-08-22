@@ -1,54 +1,45 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../features/auth/presentation/providers/auth_providers.dart';
-import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/reset_password_screen.dart';
-import '../features/auth/presentation/screens/splash_screen.dart';
-import '../features/booking/presentation/screens/booking_home_screen.dart';
-import '../features/employee/presentation/screens/employee_schedule_screen.dart';
-import '../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/role_selection_screen.dart';
+import '../../features/dashboard/main_dashboard.dart';
+
+final authStateChangesProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
+});
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final authState = ref.watch(authStateChangesProvider);
 
   return GoRouter(
-    initialLocation: '/splash',
+    initialLocation: '/login',
     redirect: (context, state) {
-      final isAuth = authState.valueOrNull != null;
-      final isSplash = state.matchedLocation == '/splash';
+      final isLoggedIn = authState.valueOrNull != null;
+      final isLoginPage = state.matchedLocation == '/login';
 
-      if (isSplash) {
-        return null; // Let splash screen handle its own logic
-      }
-
-      if (!isAuth && state.matchedLocation != '/login') {
+      // Si no está autenticado, ir al login
+      if (!isLoggedIn && !isLoginPage) {
         return '/login';
       }
 
-      return null;
+      // Si está autenticado pero en login, ir al dashboard
+      if (isLoggedIn && isLoginPage) {
+        return '/dashboard';
+      }
+
+      return null; // No redirect needed
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
-        path: '/reset-password',
-        builder: (context, state) => const ResetPasswordScreen(),
-      ),
-      GoRoute(
-        path: '/booking',
-        builder: (context, state) => const BookingHomeScreen(),
-      ),
-      GoRoute(
-        path: '/schedule',
-        builder: (context, state) => const EmployeeScheduleScreen(),
+        path: '/role-selection',
+        builder: (context, state) => const RoleSelectionScreen(),
       ),
       GoRoute(
         path: '/dashboard',
-        builder: (context, state) => const AdminDashboardScreen(),
+        builder: (context, state) => const MainDashboard(),
       ),
     ],
   );

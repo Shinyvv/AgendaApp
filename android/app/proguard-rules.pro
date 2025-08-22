@@ -38,6 +38,14 @@
 -keep class com.google.android.gms.auth.** { *; }
 -keep class com.google.android.gms.common.** { *; }
 
+# Play Core rules - prevent R8 errors
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
+# Flutter Play Store specific rules
+-keep class io.flutter.embedding.android.FlutterPlayStoreSplitApplication { *; }
+-keep class io.flutter.embedding.engine.deferredcomponents.** { *; }
+
 # Gson rules (if using)
 -keepattributes Signature
 -keepattributes *Annotation*

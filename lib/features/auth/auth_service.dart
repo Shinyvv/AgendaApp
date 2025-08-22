@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../../src/models/user_model.dart';
+import '../../src/services/user_service.dart';
 
 /// Servicio de autenticación centralizado
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final UserService _userService = UserService();
 
   /// Stream del estado de autenticación
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -19,19 +21,21 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
+    UserRole? role, // Permitir seleccionar rol al registrarse
   }) async {
     try {
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       // Actualizar el perfil del usuario
       await userCredential.user?.updateDisplayName(displayName);
 
-      // Guardar información adicional en Firestore
+      // Crear usuario con rol en Firestore
       if (userCredential.user != null) {
-        await _saveUserToFirestore(userCredential.user!);
+        await _userService.createUserFromFirebaseAuth(
+          userCredential.user!,
+          role: role,
+        );
       }
 
       return userCredential;
@@ -55,27 +59,66 @@ class AuthService {
     }
   }
 
-  /// Iniciar sesión con Google
+  /// Iniciar sesión con Google usando flujo NATIVO (sin navegador)
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      
-      UserCredential userCredential;
-      
       if (kIsWeb) {
-        // For web, use signInWithPopup
-        userCredential = await _auth.signInWithPopup(googleProvider);
+        // Para web, usar Firebase Auth
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        final userCredential = await _auth.signInWithPopup(googleProvider);
+
+        if (userCredential.user != null) {
+          await _userService.createUserFromFirebaseAuth(userCredential.user!);
+        }
+
+        return userCredential;
       } else {
-        // For mobile, use signInWithProvider
-        userCredential = await _auth.signInWithProvider(googleProvider);
-      }
+        // Para móvil: Usar GoogleSignIn 6.x con configuración nativa
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          scopes: ['email', 'profile'],
+        );
 
-      // Guardar información del usuario en Firestore
-      if (userCredential.user != null) {
-        await _saveUserToFirestore(userCredential.user!);
-      }
+        try {
+          // Cerrar cualquier sesión previa
+          await googleSignIn.signOut();
 
-      return userCredential;
+          // Iniciar el flujo de autenticación nativo
+          final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+          if (googleUser == null) {
+            return null; // Usuario canceló
+          }
+
+          // Obtener las credenciales de autenticación
+          final GoogleSignInAuthentication googleAuth =
+              await googleUser.authentication;
+
+          if (googleAuth.accessToken == null) {
+            throw 'No se pudo obtener el token de acceso';
+          }
+
+          // Crear credencial de Firebase
+          final credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
+
+          // Autenticar con Firebase
+          final UserCredential userCredential = await _auth
+              .signInWithCredential(credential);
+
+          // Crear o actualizar usuario en Firestore
+          if (userCredential.user != null) {
+            await _userService.createUserFromFirebaseAuth(userCredential.user!);
+          }
+
+          return userCredential;
+        } catch (e) {
+          await googleSignIn.signOut();
+          rethrow;
+        }
+      }
     } catch (e) {
       throw 'Error al iniciar sesión con Google: ${e.toString()}';
     }
@@ -92,23 +135,6 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
-    }
-  }
-
-  /// Guardar usuario en Firestore
-  Future<void> _saveUserToFirestore(User user) async {
-    try {
-      await _firestore.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'email': user.email,
-        'displayName': user.displayName,
-        'photoURL': user.photoURL,
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastSignIn': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (e) {
-      // Log el error pero no bloquear el registro
-      print('Error guardando usuario en Firestore: $e');
     }
   }
 

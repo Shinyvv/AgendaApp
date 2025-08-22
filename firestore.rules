@@ -1,60 +1,18 @@
-rules_version = '2';
+rules_version='2'
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function claimBusiness() { return request.auth.token.businessId; }
-    function claimRole() { return request.auth.token.role; }
-    function isAdmin() { return isSignedIn() && claimRole() == 'admin'; }
-    function isEmployee() { return isSignedIn() && (claimRole() == 'employee' || isAdmin()); }
-    function sameBiz(bizId) { return isSignedIn() && claimBusiness() == bizId; }
-
-    match /businesses/{businessId} {
-      allow read: if sameBiz(businessId);
-      allow create: if isAdmin() && sameBiz(businessId);
-      allow update, delete: if isAdmin() && sameBiz(businessId);
-
-      match /employees/{employeeId} {
-        allow read: if sameBiz(businessId);
-        allow write: if isAdmin() && sameBiz(businessId);
-      }
-
-      match /customers/{customerId} {
-        allow read: if sameBiz(businessId);
-        allow create: if sameBiz(businessId);
-        allow update, delete: if isAdmin() && sameBiz(businessId);
-      }
-
-      match /services/{serviceId} {
-        allow read: if sameBiz(businessId);
-        allow write: if isEmployee() && sameBiz(businessId);
-      }
-
-      match /availability/{employeeId}/{docId} {
-        allow read: if sameBiz(businessId);
-        allow write: if isEmployee() && sameBiz(businessId);
-      }
-
-      match /appointments/{appointmentId} {
-        allow read: if sameBiz(businessId);
-        allow create: if sameBiz(businessId) && (isEmployee() || request.resource.data.customerId == request.auth.uid);
-        allow update: if sameBiz(businessId) && (
-          isEmployee() ||
-          (request.auth.uid == resource.data.createdBy && request.time < resource.data.startAt)
-        );
-        allow delete: if isAdmin() && sameBiz(businessId);
-      }
-
-      // Per-slot locks used in transactions to avoid double booking.
-      match /locks/{lockId} {
-        allow read: if false; // not needed client-side
-        allow create, delete: if sameBiz(businessId); // any role within tenant may lock
-        allow update: if false;
-      }
-
-      match /metrics_daily/{dateId} {
-        allow read: if isEmployee() && sameBiz(businessId);
-        allow write: if isAdmin() && sameBiz(businessId);
-      }
+    match /{document=**} {
+      // This rule allows anyone with your database reference to view, edit,
+      // and delete all data in your database. It is useful for getting
+      // started, but it is configured to expire after 30 days because it
+      // leaves your app open to attackers. At that time, all client
+      // requests to your database will be denied.
+      //
+      // Make sure to write security rules for your app before that time, or
+      // else all client requests to your database will be denied until you
+      // update your rules.
+      allow read, write: if request.time < timestamp.date(2025, 9, 21);
     }
   }
 }

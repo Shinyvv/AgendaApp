@@ -10,7 +10,7 @@ class BookingHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reservar Cita'),
@@ -25,12 +25,15 @@ class BookingHomeScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CircleAvatar(
-                    backgroundImage: currentUser.photoURL != null 
+                    backgroundImage: currentUser.photoURL != null
                         ? NetworkImage(currentUser.photoURL!)
                         : null,
                     backgroundColor: Colors.white,
                     child: currentUser.photoURL == null
-                        ? Icon(Icons.person, color: Theme.of(context).primaryColor)
+                        ? Icon(
+                            Icons.person,
+                            color: Theme.of(context).primaryColor,
+                          )
                         : null,
                   ),
                   const SizedBox(width: 8),
@@ -40,7 +43,10 @@ class BookingHomeScreen extends ConsumerWidget {
                     children: [
                       Text(
                         currentUser.displayName ?? 'Usuario',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         currentUser.email ?? '',
@@ -54,22 +60,45 @@ class BookingHomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            // Sign out button
+            // Direct logout button (more visible)
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.white),
+              tooltip: 'Cerrar Sesión',
+              onPressed: () async {
+                await _showLogoutDialog(context, ref);
+              },
+            ),
+            // Existing popup menu (kept as backup)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               onSelected: (value) async {
                 if (value == 'logout') {
                   await _showLogoutDialog(context, ref);
+                } else if (value == 'profile') {
+                  // TODO: Navigate to profile
                 }
               },
               itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person),
+                      SizedBox(width: 8),
+                      Text('Perfil'),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem<String>(
                   value: 'logout',
                   child: Row(
                     children: [
                       Icon(Icons.logout, color: Colors.red),
                       SizedBox(width: 8),
-                      Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                      Text(
+                        'Cerrar Sesión',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),
@@ -109,7 +138,7 @@ class BookingHomeScreen extends ConsumerWidget {
       try {
         final authService = ref.read(authServiceProvider);
         await authService.signOut();
-        
+
         if (context.mounted) {
           context.go('/login');
           ScaffoldMessenger.of(context).showSnackBar(

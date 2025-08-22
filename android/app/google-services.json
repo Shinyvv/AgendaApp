@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "960030273194-o3tc6sua25kv1fnjd7q7dfevrkqb8s6g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.daspix.agendaapp",
+            "certificate_hash": "8ea7a3785f0612d8099d4041e8bd73451b7b509f"
+          }
+        },
+        {
           "client_id": "960030273194-q1rqoa304h587hsa4ilcnlb8a0anq0vh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -21,42 +29,6 @@
             "certificate_hash": "c9af6d67d2db29d0e54b3a05a01fe526dfbe084f"
           }
         },
-        {
-          "client_id": "960030273194-sqnq9dth1gr5d7qbn6jrb5he4442r30q.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD8VaWaIq_sV_NxjsCSgiDPITjP95QTPdQ"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "960030273194-sqnq9dth1gr5d7qbn6jrb5he4442r30q.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "960030273194-ot9rdsqrps8d8h3scrugat747gciic8v.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.appPrueba"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:960030273194:android:ee0a2a14932b07ed08ead3",
-        "android_client_info": {
-          "package_name": "com.example.app_prueba"
-        }
-      },
-      "oauth_client": [
         {
           "client_id": "960030273194-sqnq9dth1gr5d7qbn6jrb5he4442r30q.apps.googleusercontent.com",
           "client_type": 3
