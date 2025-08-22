@@ -45,8 +45,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Error: $e';
+
+        // Si es un error de permisos, dar instrucciones específicas
+        if (e.toString().contains('permission') ||
+            e.toString().contains('PERMISSION_DENIED') ||
+            e.toString().contains('insufficient permissions')) {
+          errorMessage =
+              'Error de permisos temporales.\n\nSolución: Presiona "Reintentar" en unos segundos.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: () => _signIn(),
+            ),
+          ),
         );
       }
     } finally {
@@ -105,10 +124,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Error al iniciar sesión con Google: $e';
+
+        // Si es un error de permisos, dar instrucciones específicas
+        if (e.toString().contains('permission') ||
+            e.toString().contains('PERMISSION_DENIED') ||
+            e.toString().contains('insufficient permissions')) {
+          errorMessage =
+              'Error de permisos temporales con Google.\n\nSolución: Intenta de nuevo en unos segundos.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al iniciar sesión con Google: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: () => _signInWithGoogle(),
+            ),
           ),
         );
       }

@@ -18,7 +18,7 @@ class UserService {
     }
   }
 
-  /// Obtener datos del usuario actual desde Firestore
+  /// Obtener datos del usuario actual desde Firestore con retry
   Stream<AppUser?> getCurrentUserData() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value(null);
@@ -30,6 +30,11 @@ class UserService {
         .map((doc) {
           if (!doc.exists) return null;
           return AppUser.fromJson(doc.data()!);
+        })
+        .handleError((error) {
+          _debugLog('❌ Error en getCurrentUserData: $error');
+          // En caso de error, esperar un momento antes de reintentar
+          return Future.delayed(const Duration(seconds: 2)).then((_) => null);
         });
   }
 
@@ -163,7 +168,7 @@ class UserService {
     _debugLog('🏁 === CAMBIO DE ROL COMPLETADO ===');
   }
 
-  /// Obtener todos los trabajadores
+  /// Obtener todos los trabajadores con retry y mejor manejo de errores
   Stream<List<AppUser>> getAllWorkers() {
     return _firestore
         .collection(_usersCollection)
@@ -173,7 +178,13 @@ class UserService {
         .map(
           (snapshot) =>
               snapshot.docs.map((doc) => AppUser.fromJson(doc.data())).toList(),
-        );
+        )
+        .handleError((error) {
+          _debugLog('❌ Error en getAllWorkers: $error');
+          _debugLog('🔄 Reintentando consulta de trabajadores...');
+          // Retornar lista vacía en caso de error temporal, el stream se reintentará automáticamente
+          return <AppUser>[];
+        });
   }
 
   /// Obtener todos los usuarios

@@ -50,12 +50,33 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Esperar a que el token de autenticación se propague completamente
+      if (userCredential.user != null) {
+        await _waitForAuthTokenPropagation(userCredential.user!);
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  /// Esperar a que el token de autenticación se propague completamente
+  Future<void> _waitForAuthTokenPropagation(User user) async {
+    try {
+      // Intentar obtener el token de ID y verificar que esté válido
+      await user.getIdToken(true); // Force refresh
+
+      // Pequeña pausa adicional para asegurar propagación en Firestore
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      // Si hay error obteniendo el token, esperamos un poco más
+      await Future.delayed(const Duration(seconds: 1));
     }
   }
 
@@ -67,6 +88,11 @@ class AuthService {
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
         final userCredential = await _auth.signInWithPopup(googleProvider);
+
+        // Esperar a que el token de autenticación se propague completamente
+        if (userCredential.user != null) {
+          await _waitForAuthTokenPropagation(userCredential.user!);
+        }
 
         // Usuario será creado en role_selection_screen con el rol correcto
         // No crear aquí para evitar operaciones duplicadas de Firestore
@@ -106,6 +132,11 @@ class AuthService {
           // Autenticar con Firebase
           final UserCredential userCredential = await _auth
               .signInWithCredential(credential);
+
+          // Esperar a que el token de autenticación se propague completamente
+          if (userCredential.user != null) {
+            await _waitForAuthTokenPropagation(userCredential.user!);
+          }
 
           // Usuario será creado en role_selection_screen con el rol correcto
           // No crear aquí para evitar operaciones duplicadas de Firestore

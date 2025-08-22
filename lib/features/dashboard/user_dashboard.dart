@@ -62,8 +62,52 @@ class UserDashboard extends ConsumerWidget {
                   workers.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (error, _) =>
-                        Text('Error cargando trabajadores: $error'),
+                    error: (error, _) => Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.warning_outlined,
+                                color: Colors.red.shade400,
+                                size: 32,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Error cargando trabajadores',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Problema de permisos temporal',
+                                style: TextStyle(color: Colors.red.shade600),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('Reintentar'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red.shade100,
+                                  foregroundColor: Colors.red.shade700,
+                                ),
+                                onPressed: () {
+                                  ref.invalidate(allWorkersProvider);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     data: (workersList) => ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),

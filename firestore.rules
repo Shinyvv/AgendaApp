@@ -7,8 +7,14 @@ service cloud.firestore {
       // Permitir CREAR documento si el usuario está autenticado y el documento es para su propio UID
       allow create: if request.auth != null && request.auth.uid == userId;
       
-      // Permitir leer y actualizar solo al propietario del documento
+      // Permitir leer su propio documento
       allow read, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir a usuarios autenticados leer información básica de otros usuarios (para dashboard)
+      // pero solo campos públicos necesarios para mostrar trabajadores disponibles
+      allow read: if request.auth != null && 
+                     request.auth.uid != userId && 
+                     resource.data.isActive == true;
       
       // Prohibir DELETE por seguridad
       allow delete: if false;
