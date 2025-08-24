@@ -10,7 +10,9 @@
     <application
         android:label="Agenda App"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -34,25 +36,6 @@
             </intent-filter>
         </activity>
         
-        <!-- Configuración para Google Sign-In nativo -->
-        <meta-data
-            android:name="com.google.android.gms.auth.api.signin.GoogleSignInOptions"
-            android:value="true" />
-            
-        <!-- Web Client ID para Google Sign-In -->
-        <meta-data
-            android:name="com.google.android.gms.auth.api.signin.GoogleSignInApi.GoogleSignInOptions.DEFAULT_SIGN_IN"
-            android:value="960030273194-sqnq9dth1gr5d7qbn6jrb5he4442r30q.apps.googleusercontent.com" />
-        
-        <!-- Deshabilitar Custom Tabs para Google Sign-In -->
-        <meta-data
-            android:name="com.google.firebase.auth.internal.DISABLE_CUSTOM_TABS"
-            android:value="true" />
-            
-        <!-- Forzar uso de aplicación nativa de Google -->
-        <meta-data
-            android:name="com.google.android.gms.auth.PREFER_NATIVE_FLOW"
-            android:value="true" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

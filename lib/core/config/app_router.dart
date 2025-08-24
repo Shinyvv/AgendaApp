@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 import '../constants/app_constants.dart';
-import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/enhanced_login_screen.dart';
+import '../../features/auth/presentation/enhanced_register_screen.dart';
+import '../../features/dashboard/presentation/enhanced_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/main_dashboard.dart';
 import '../../features/dashboard/presentation/screens/user_dashboard.dart';
 import '../../features/dashboard/presentation/screens/worker_dashboard.dart';
+import '../../examples/ui_components_examples.dart';
 
 /// Configuración de rutas de la aplicación usando GoRouter
 ///
@@ -20,14 +23,18 @@ class AppRouter {
       redirect: (context, state) {
         final authState = ref.watch(authProvider);
         final isLoggedIn = authState.asData?.value != null;
+        final currentPath = state.matchedLocation;
 
-        // Si no está logueado y no está en login, redirigir a login
-        if (!isLoggedIn && state.matchedLocation != AppConstants.loginRoute) {
+        // Rutas públicas que no requieren autenticación
+        final publicRoutes = [AppConstants.loginRoute, '/register'];
+
+        // Si no está logueado y no está en ruta pública, redirigir a login
+        if (!isLoggedIn && !publicRoutes.contains(currentPath)) {
           return AppConstants.loginRoute;
         }
 
-        // Si está logueado y está en login, redirigir al dashboard
-        if (isLoggedIn && state.matchedLocation == AppConstants.loginRoute) {
+        // Si está logueado y está en login o register, redirigir al dashboard
+        if (isLoggedIn && publicRoutes.contains(currentPath)) {
           return AppConstants.dashboardRoute;
         }
 
@@ -40,13 +47,24 @@ class AppRouter {
         ),
         GoRoute(
           path: AppConstants.loginRoute,
-          pageBuilder: (context, state) =>
-              MaterialPage(key: state.pageKey, child: const LoginScreen()),
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const EnhancedLoginScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/register',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const EnhancedRegisterScreen(),
+          ),
         ),
         GoRoute(
           path: AppConstants.dashboardRoute,
-          pageBuilder: (context, state) =>
-              MaterialPage(key: state.pageKey, child: const MainDashboard()),
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const EnhancedDashboardScreen(),
+          ),
           routes: [
             GoRoute(
               path: 'user',
@@ -63,6 +81,13 @@ class AppRouter {
               ),
             ),
           ],
+        ),
+        GoRoute(
+          path: '/ui-examples',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const UIComponentsExamples(),
+          ),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(
