@@ -119,7 +119,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     env:
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.vfs.watch=false"
       JAVA_OPTS: "-Xmx4g"
     steps:
       - name: Checkout repository
@@ -186,23 +186,19 @@ jobs:
       - name: Install required libraries
         run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
 
-      - name: Clean Android build
+      - name: Clean and prepare Android build (optimized)
         run: |
           cd android
-          ./gradlew clean --build-cache --parallel --no-configuration-cache
-          cd ..
-
-      - name: Pre-build dependencies
-        run: |
-          cd android
-          ./gradlew build --build-cache --parallel --no-daemon --no-configuration-cache || true
+          ./gradlew clean --no-configuration-cache --quiet
           cd ..
 
       - name: Ensure Flutter dependencies are ready
         run: flutter pub get
 
-      - name: Build Flutter App Bundle (Android)
-        run: flutter build appbundle --release
+      - name: Build Flutter App Bundle (Android) - Optimized
+        run: flutter build appbundle --release --verbose --no-tree-shake-icons
+        env:
+          FLUTTER_BUILD_MODE: release
 
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
