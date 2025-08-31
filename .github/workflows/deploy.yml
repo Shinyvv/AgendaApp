@@ -177,6 +177,9 @@ jobs:
       - name: Set JAVA_HOME for Gradle
         run: echo "org.gradle.java.home=$JAVA_HOME" >> $GITHUB_WORKSPACE/android/gradle.properties
 
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
       - name: Clean Flutter build
         run: flutter clean
 
