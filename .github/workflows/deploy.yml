@@ -1,0 +1,124 @@
+# GitHub Actions Workflow for Flutter CI/CD with Firebase
+
+name: Build, Test, and Deploy
+
+on:
+  push:
+    branches:
+      - Desarrollo
+  pull_request:
+    branches:
+      - Desarrollo
+
+jobs:
+  test:
+    name: Run Tests (Flutter & Node.js)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Run Flutter & Dart tests
+        run: flutter test
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Node.js dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Node.js tests in functions
+        run: pnpm --filter=functions test
+
+  build_web_and_deploy_hosting:
+    name: Build Web and Deploy to Firebase Hosting
+    needs: test
+    runs-on: ubuntu-latest
+    environment: Developing
+    env:
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+    # This job should only run on push to the main branch, not on pull requests.
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Flutter for Web
+        run: flutter build web --release
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Firebase CLI
+        run: pnpm add -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
+          channelId: live
+          projectId: agendaapp-b6213 # Replace with your Firebase project ID if different
+
+  build_android:
+    name: Build Flutter (Android)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Flutter App Bundle (Android)
+        run: flutter build appbundle --release
+
+      - name: Upload Android App Bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-appbundle
+          path: build/app/outputs/bundle/release/app-release.aab
