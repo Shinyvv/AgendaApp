@@ -171,9 +171,6 @@ jobs:
           restore-keys: |
             android-build-${{ runner.os }}-
 
-      - name: Install Flutter dependencies
-        run: flutter pub get
-
       - name: Set JAVA_HOME for Gradle
         run: echo "org.gradle.java.home=$JAVA_HOME" >> $GITHUB_WORKSPACE/android/gradle.properties
 
@@ -182,6 +179,9 @@ jobs:
 
       - name: Clean Flutter build
         run: flutter clean
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
 
       - name: Install required libraries
         run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
@@ -197,6 +197,9 @@ jobs:
           cd android
           ./gradlew build --build-cache --parallel --no-daemon --no-configuration-cache || true
           cd ..
+
+      - name: Ensure Flutter dependencies are ready
+        run: flutter pub get
 
       - name: Build Flutter App Bundle (Android)
         run: flutter build appbundle --release
