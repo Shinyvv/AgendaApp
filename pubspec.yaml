@@ -28,7 +28,7 @@ dependencies:
   # UI & Utilidades
   cupertino_icons: ^1.0.8
   table_calendar: ^3.2.0
-  intl: ^0.19.0 # Actualizado para compatibilidad
+  intl: ^0.20.2 # Actualizado para compatibilidad
 
   # Notificaciones
   flutter_local_notifications: ^17.2.1
