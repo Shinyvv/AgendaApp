@@ -11,10 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase (actualizado a las últimas versiones estables)
-  firebase_core: ^3.3.0
-  firebase_auth: ^5.1.2
-  cloud_firestore: ^5.1.0
+  # Firebase (versiones estables compatibles con R8)
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.17.5
   
   # JSON and serialization
   json_annotation: ^4.9.0
