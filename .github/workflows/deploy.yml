@@ -114,8 +114,14 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      - name: Clean Flutter build
+        run: flutter clean
+
+      - name: Install required libraries
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
+
       - name: Build Flutter App Bundle (Android)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release -v
 
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
