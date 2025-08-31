@@ -119,11 +119,7 @@ class AuthService {
           final GoogleSignInAuthentication googleAuth =
               await googleUser.authentication;
 
-          if (googleAuth.accessToken == null) {
-            throw 'No se pudo obtener el token de acceso';
-          }
-
-          // Crear credencial de Firebase
+          // Crear credencial de Firebase - accessToken puede ser null en algunas plataformas
           final credential = GoogleAuthProvider.credential(
             accessToken: googleAuth.accessToken,
             idToken: googleAuth.idToken,
