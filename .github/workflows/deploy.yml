@@ -114,6 +114,9 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      - name: Set JAVA_HOME for Gradle
+        run: echo "org.gradle.java.home=$JAVA_HOME" >> $GITHUB_WORKSPACE/android/gradle.properties
+
       - name: Clean Flutter build
         run: flutter clean
 
