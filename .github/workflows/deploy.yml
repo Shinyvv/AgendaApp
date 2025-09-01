@@ -119,8 +119,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     env:
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.vfs.watch=false"
-      JAVA_OPTS: "-Xmx4g"
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.vfs.watch=false"
+      JAVA_OPTS: "-Xmx2g"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -196,9 +196,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter App Bundle (Android) - Optimized
-        run: flutter build appbundle --release --verbose --no-tree-shake-icons
+        run: flutter build appbundle --release
         env:
           FLUTTER_BUILD_MODE: release
+          GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
 
       - name: Debug - List all .aab files
         run: find ${{ github.workspace }} -name '*.aab' -type f 2>/dev/null || echo "No .aab files found"
@@ -216,6 +217,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-appbundle
-          path: |
-            build/app/outputs/bundle/release/app-release.aab
-            android/app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+        if: ${{ always() }}
