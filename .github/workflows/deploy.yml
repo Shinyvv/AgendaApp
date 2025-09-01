@@ -200,6 +200,18 @@ jobs:
         env:
           FLUTTER_BUILD_MODE: release
 
+      - name: Debug - List all .aab files
+        run: find ${{ github.workspace }} -name '*.aab' -type f 2>/dev/null || echo "No .aab files found"
+
+      - name: Debug - List build outputs
+        run: |
+          echo "=== Listing build directory structure ==="
+          ls -la build/ 2>/dev/null || echo "No build/ directory found"
+          echo "=== Listing android build outputs ==="
+          ls -la android/app/build/outputs/ 2>/dev/null || echo "No android build outputs found"
+          echo "=== Full directory structure scan ==="
+          find . -name "*.aab" -o -name "*bundle*" -type d 2>/dev/null | head -20
+
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
