@@ -196,22 +196,42 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter App Bundle (Android) - Optimized
-        run: flutter build appbundle --release
+        run: |
+          echo "Starting Flutter App Bundle build..."
+          flutter build appbundle --release --verbose || {
+            echo "Flutter build failed. Checking Gradle logs..."
+            cat android/app/build/outputs/logs/bundle-release.log 2>/dev/null || echo "No bundle log found"
+            exit 1
+          }
         env:
           FLUTTER_BUILD_MODE: release
           GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
 
-      - name: Debug - List all .aab files
-        run: find ${{ github.workspace }} -name '*.aab' -type f 2>/dev/null || echo "No .aab files found"
+      - name: Print Gradle build logs on failure
+        if: failure()
+        run: |
+          echo "=== Checking for Gradle build errors ==="
+          find android -name "*.log" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || echo "No log files found"
+          echo "=== Checking output metadata ==="
+          cat android/app/build/outputs/bundle/release/output-metadata.json 2>/dev/null || echo "No output-metadata.json found"
 
-      - name: Debug - List build outputs
+      - name: Debug - List all .aab files and build structure
+        run: |
+          echo "=== Searching for .aab files ==="
+          find ${{ github.workspace }} -name '*.aab' -type f 2>/dev/null || echo "No .aab files found"
+          echo "=== Full android build outputs structure ==="
+          find android/app/build -type f -name "*release*" 2>/dev/null | head -20 || echo "No android build files found"
+
+      - name: Debug - List build outputs (legacy)
+        if: always()
         run: |
           echo "=== Listing build directory structure ==="
           ls -la build/ 2>/dev/null || echo "No build/ directory found"
           echo "=== Listing android build outputs ==="
           ls -la android/app/build/outputs/ 2>/dev/null || echo "No android build outputs found"
-          echo "=== Full directory structure scan ==="
-          find . -name "*.aab" -o -name "*bundle*" -type d 2>/dev/null | head -20
+          echo "=== Checking for bundle directory ==="
+          ls -la android/app/build/outputs/bundle/ 2>/dev/null || echo "No bundle directory found"
+          ls -la android/app/build/outputs/bundle/release/ 2>/dev/null || echo "No release bundle directory found"
 
       - name: Upload Android App Bundle artifact
         uses: actions/upload-artifact@v4
