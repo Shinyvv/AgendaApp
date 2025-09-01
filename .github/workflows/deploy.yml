@@ -207,6 +207,20 @@ jobs:
           FLUTTER_BUILD_MODE: release
           GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
 
+      - name: Fix .aab file location issue
+        run: |
+          echo "Creating expected directory structure for .aab file..."
+          mkdir -p build/app/outputs/bundle/release
+          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
+            echo "Copying .aab file to expected location..."
+            cp android/app/build/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/app-release.aab
+            echo "✅ .aab file copied successfully!"
+            ls -la build/app/outputs/bundle/release/
+          else
+            echo "❌ .aab file not found at android/app/build/outputs/bundle/release/"
+            exit 1
+          fi
+
       - name: Print Gradle build logs on failure
         if: failure()
         run: |
@@ -237,5 +251,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-appbundle
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/bundle/release/app-release.aab
         if: ${{ always() }}
