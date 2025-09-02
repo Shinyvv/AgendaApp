@@ -33,6 +33,7 @@ class LocalNotifications {
       body,
       tz.TZDateTime.from(when, tz.local),
       details,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dateAndTime,
     );
