@@ -10,6 +10,9 @@ android {
     compileSdk flutter.compileSdkVersion
     ndkVersion "27.0.12077973"
 
+    // Set build directory to match Flutter's expected path
+    buildDir = new File(project.rootDir.parent, "build/app")
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

@@ -225,31 +225,14 @@ jobs:
           echo "Available memory:"
           free -h
 
-      - name: Build Flutter App Bundle (Android) - Fixed
+      - name: Build Flutter App Bundle (Android)
         run: |
-          echo "=== Building Flutter App Bundle with Auto .aab Fix ==="
+          echo "=== Building Flutter App Bundle ==="
           echo "Build started at: $(date)"
           
-          # Create the directory where Flutter expects the .aab file
-          echo "Creating expected .aab directory structure..."
-          mkdir -p build/app/outputs/bundle/release
-          
-          # Build the app bundle 
+          # Build the app bundle (now generates directly in correct location)
           echo "Running flutter build appbundle..."
           flutter build appbundle --release --verbose
-          
-          # Copy .aab from where Gradle puts it to where Flutter expects it
-          echo "Copying .aab file to expected location..."
-          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
-            cp android/app/build/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/app-release.aab
-            echo "✅ .aab file copied successfully!"
-            echo "File size: $(ls -lh build/app/outputs/bundle/release/app-release.aab | awk '{print $5}')"
-          else
-            echo "❌ .aab file not found in expected Gradle location"
-            echo "Searching for .aab files:"
-            find . -name "*.aab" -type f || echo "No .aab files found"
-            exit 1
-          fi
         env:
           FLUTTER_BUILD_MODE: release
           GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
