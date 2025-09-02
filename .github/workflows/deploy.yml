@@ -112,7 +112,7 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
           channelId: live
-          projectId: agendaapp-b6213 # Replace with your Firebase project ID if different
+          projectId: agendaapptry
 
   build_android:
     name: Build Flutter (Android)
