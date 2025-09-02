@@ -1,0 +1,284 @@
+# GitHub Actions Workflow for Flutter CI/CD with Firebase
+
+name: Build, Test, and Deploy
+
+on:
+  push:
+    branches:
+      - main  # Solo despliega cuando hagas push a main
+  pull_request:
+    branches:
+      - Desarrollo  # Mantiene los tests en PRs a Desarrollo
+
+jobs:
+  test:
+    name: Run Tests (Flutter & Node.js)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ runner.tool_cache }}/flutter
+          key: flutter-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            flutter-${{ runner.os }}-
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Run Flutter & Dart tests
+        run: flutter test
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Node.js dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Node.js tests in functions
+        run: pnpm --filter=functions test
+
+  build_web_and_deploy_hosting:
+    name: Build Web and Deploy to Firebase Hosting
+    needs: test
+    runs-on: ubuntu-latest
+    environment: Developing
+    env:
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+    # This job should only run on push to the main branch, not on pull requests.
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ runner.tool_cache }}/flutter
+          key: flutter-web-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            flutter-web-${{ runner.os }}-
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Flutter for Web
+        run: flutter build web --release
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Firebase CLI
+        run: pnpm add -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
+          channelId: live
+          projectId: agendaapptry
+
+  build_android:
+    name: Build Flutter (Android)
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.vfs.watch=false"
+      JAVA_OPTS: "-Xmx2g"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ runner.tool_cache }}/flutter
+          key: flutter-android-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            flutter-android-${{ runner.os }}-
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/.gradle
+            android/.gradle
+            android/app/.gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache Android build
+        uses: actions/cache@v4
+        with:
+          path: |
+            android/app/build
+            android/build
+            build
+          key: android-build-${{ runner.os }}-${{ hashFiles('**/*.dart', '**/*.gradle*') }}
+          restore-keys: |
+            android-build-${{ runner.os }}-
+
+      - name: Set JAVA_HOME for Gradle
+        run: echo "org.gradle.java.home=$JAVA_HOME" >> $GITHUB_WORKSPACE/android/gradle.properties
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Clean Flutter build
+        run: flutter clean
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Install required libraries
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
+
+      - name: Clean and prepare Android build (enhanced)
+        run: |
+          cd android
+          ./gradlew clean --no-configuration-cache --quiet
+          # Remove any cached build artifacts
+          rm -rf app/build/
+          rm -rf build/
+          cd ..
+          # Clean Flutter build cache again after Gradle clean
+          flutter clean
+
+      - name: Ensure Flutter dependencies are ready (enhanced)
+        run: |
+          echo "=== Dependency management ==="
+          flutter pub get
+          
+          # Check for dependency conflicts
+          echo "Checking for dependency conflicts:"
+          flutter pub deps 2>&1 | grep -i "conflict\|error" || echo "No dependency conflicts detected"
+          
+          # Verify critical plugins are available
+          echo "Verifying critical plugins:"
+          flutter pub deps | grep -E "(firebase_core|firebase_auth|cloud_firestore|google_sign_in)" || echo "Firebase plugins not found in dependencies"
+          
+          echo "Flutter doctor check:"
+          flutter doctor -v
+
+      - name: Pre-build diagnostics
+        run: |
+          echo "=== Pre-build environment check ==="
+          echo "Flutter version:"
+          flutter --version
+          echo "Gradle version:"
+          cd android && ./gradlew --version && cd ..
+          echo "Java version:"
+          java -version
+          echo "Available memory:"
+          free -h
+
+      - name: Build Flutter App Bundle (Android)
+        run: |
+          echo "=== Building Flutter App Bundle ==="
+          echo "Build started at: $(date)"
+          
+          # Build the app bundle (now generates directly in correct location)
+          echo "Running flutter build appbundle..."
+          flutter build appbundle --release --verbose
+        env:
+          FLUTTER_BUILD_MODE: release
+          GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
+
+      - name: Verify .aab file exists and show details
+        run: |
+          echo "=== Final .aab file verification ==="
+          if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
+            echo "✅ .aab file exists in expected location"
+            echo "File details:"
+            ls -lh build/app/outputs/bundle/release/app-release.aab
+            echo "File size: $(du -h build/app/outputs/bundle/release/app-release.aab | cut -f1)"
+          else
+            echo "❌ .aab file still not found in expected location"
+            exit 1
+          fi
+
+      - name: Print Gradle build logs on failure
+        if: failure()
+        run: |
+          echo "=== Checking for Gradle build errors ==="
+          find android -name "*.log" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || echo "No log files found"
+          echo "=== Checking output metadata ==="
+          cat android/app/build/outputs/bundle/release/output-metadata.json 2>/dev/null || echo "No output-metadata.json found"
+
+      - name: Debug - List all .aab files and build structure
+        run: |
+          echo "=== Searching for .aab files ==="
+          find ${{ github.workspace }} -name '*.aab' -type f 2>/dev/null || echo "No .aab files found"
+          echo "=== Full android build outputs structure ==="
+          find android/app/build -type f -name "*release*" 2>/dev/null | head -20 || echo "No android build files found"
+
+      - name: Debug - List build outputs (legacy)
+        if: always()
+        run: |
+          echo "=== Listing build directory structure ==="
+          ls -la build/ 2>/dev/null || echo "No build/ directory found"
+          echo "=== Listing android build outputs ==="
+          ls -la android/app/build/outputs/ 2>/dev/null || echo "No android build outputs found"
+          echo "=== Checking for bundle directory ==="
+          ls -la android/app/build/outputs/bundle/ 2>/dev/null || echo "No bundle directory found"
+          ls -la android/app/build/outputs/bundle/release/ 2>/dev/null || echo "No release bundle directory found"
+
+      - name: Upload Android App Bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-appbundle
+          path: build/app/outputs/bundle/release/app-release.aab
+        if: success()
