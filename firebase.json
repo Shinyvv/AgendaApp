@@ -1,26 +1,17 @@
 {
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "agendaapptry",
-          "appId": "1:960030273194:android:ee0a2a14932b07ed08ead3",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "agendaapptry",
-          "configurations": {
-            "android": "1:960030273194:android:ee0a2a14932b07ed08ead3",
-            "ios": "1:960030273194:ios:ad4b331e75dfbf0a08ead3",
-            "macos": "1:960030273194:ios:ad4b331e75dfbf0a08ead3",
-            "web": "1:960030273194:web:eee4879ddd0834a608ead3",
-            "windows": "1:960030273194:web:1383ea6db4d427a308ead3"
-          }
-        }
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
-    }
+    ]
   },
   "firestore": {
     "rules": "firestore.rules",

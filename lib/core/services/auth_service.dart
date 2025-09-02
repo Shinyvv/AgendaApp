@@ -101,7 +101,7 @@ class AuthService {
       } else {
         // Para móvil: Usar GoogleSignIn 6.x con configuración nativa
         final GoogleSignIn googleSignIn = GoogleSignIn(
-          scopes: ['email', 'profile'],
+          scopes: <String>['email', 'profile'],
         );
 
         try {
@@ -119,8 +119,9 @@ class AuthService {
           final GoogleSignInAuthentication googleAuth =
               await googleUser.authentication;
 
-          if (googleAuth.accessToken == null) {
-            throw 'No se pudo obtener el token de acceso';
+          // Validar que tenemos al menos el idToken
+          if (googleAuth.idToken == null) {
+            throw 'No se pudo obtener el token de identificación';
           }
 
           // Crear credencial de Firebase

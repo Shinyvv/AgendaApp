@@ -13,8 +13,8 @@ buildscript {
     }
     
     dependencies {
-        // Android Gradle Plugin - versión estable compatible con Java 17
-        classpath("com.android.tools.build:gradle:8.2.2")
+        // Android Gradle Plugin - downgraded to 8.1.0 for Flutter plugin compatibility
+        classpath("com.android.tools.build:gradle:8.1.0")
         
         // Plugin de Kotlin compatible con la versión de Kotlin especificada
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")

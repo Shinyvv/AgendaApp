@@ -26,6 +26,18 @@
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
+# Firebase Auth specific rules to fix R8 validation errors
+-dontwarn com.google.android.gms.internal.firebase-auth-api.**
+-keep class com.google.android.gms.internal.firebase-auth-api.** { *; }
+-dontwarn com.google.firebase.auth.internal.**
+-keep class com.google.firebase.auth.internal.** { *; }
+
+# Additional Firebase Auth rules for R8 compatibility
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
 # Flutter rules
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.**  { *; }

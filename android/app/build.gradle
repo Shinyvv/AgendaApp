@@ -10,6 +10,9 @@ android {
     compileSdk flutter.compileSdkVersion
     ndkVersion "27.0.12077973"
 
+    // Set build directory to match Flutter's expected path
+    buildDir = new File(project.rootDir.parent, "build/app")
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -31,6 +34,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
@@ -40,13 +45,14 @@ flutter {
 }
 
 dependencies {
-    implementation platform('com.google.firebase:firebase-bom:34.0.0')
+    // Firebase BOM - stable version that works with our setup
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
     
-    // Google Sign-In explícito para flujo nativo
-    implementation 'com.google.android.gms:play-services-auth:21.3.0'
+    // Google Sign-In explícito para flujo nativo - correct existing version
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
     
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
