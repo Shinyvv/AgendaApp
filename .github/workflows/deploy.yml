@@ -186,38 +186,84 @@ jobs:
       - name: Install required libraries
         run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
 
-      - name: Clean and prepare Android build (optimized)
+      - name: Clean and prepare Android build (enhanced)
         run: |
           cd android
           ./gradlew clean --no-configuration-cache --quiet
+          # Remove any cached build artifacts
+          rm -rf app/build/
+          rm -rf build/
           cd ..
+          # Clean Flutter build cache again after Gradle clean
+          flutter clean
 
-      - name: Ensure Flutter dependencies are ready
-        run: flutter pub get
-
-      - name: Build Flutter App Bundle (Android) - Optimized
+      - name: Ensure Flutter dependencies are ready (enhanced)
         run: |
-          echo "Starting Flutter App Bundle build..."
-          flutter build appbundle --release --verbose || {
-            echo "Flutter build failed. Checking Gradle logs..."
-            cat android/app/build/outputs/logs/bundle-release.log 2>/dev/null || echo "No bundle log found"
+          echo "=== Dependency management ==="
+          flutter pub get
+          
+          # Check for dependency conflicts
+          echo "Checking for dependency conflicts:"
+          flutter pub deps 2>&1 | grep -i "conflict\|error" || echo "No dependency conflicts detected"
+          
+          # Verify critical plugins are available
+          echo "Verifying critical plugins:"
+          flutter pub deps | grep -E "(firebase_core|firebase_auth|cloud_firestore|google_sign_in)" || echo "Firebase plugins not found in dependencies"
+          
+          echo "Flutter doctor check:"
+          flutter doctor -v
+
+      - name: Pre-build diagnostics
+        run: |
+          echo "=== Pre-build environment check ==="
+          echo "Flutter version:"
+          flutter --version
+          echo "Gradle version:"
+          cd android && ./gradlew --version && cd ..
+          echo "Java version:"
+          java -version
+          echo "Available memory:"
+          free -h
+
+      - name: Build Flutter App Bundle (Android) - Fixed
+        run: |
+          echo "=== Building Flutter App Bundle with Auto .aab Fix ==="
+          echo "Build started at: $(date)"
+          
+          # Create the directory where Flutter expects the .aab file
+          echo "Creating expected .aab directory structure..."
+          mkdir -p build/app/outputs/bundle/release
+          
+          # Build the app bundle 
+          echo "Running flutter build appbundle..."
+          flutter build appbundle --release --verbose
+          
+          # Copy .aab from where Gradle puts it to where Flutter expects it
+          echo "Copying .aab file to expected location..."
+          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/app-release.aab
+            echo "✅ .aab file copied successfully!"
+            echo "File size: $(ls -lh build/app/outputs/bundle/release/app-release.aab | awk '{print $5}')"
+          else
+            echo "❌ .aab file not found in expected Gradle location"
+            echo "Searching for .aab files:"
+            find . -name "*.aab" -type f || echo "No .aab files found"
             exit 1
-          }
+          fi
         env:
           FLUTTER_BUILD_MODE: release
           GRADLE_OPTS: "-Xmx2g -XX:MaxMetaspaceSize=512m"
 
-      - name: Fix .aab file location issue
+      - name: Verify .aab file exists and show details
         run: |
-          echo "Creating expected directory structure for .aab file..."
-          mkdir -p build/app/outputs/bundle/release
-          if [ -f "android/app/build/outputs/bundle/release/app-release.aab" ]; then
-            echo "Copying .aab file to expected location..."
-            cp android/app/build/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/app-release.aab
-            echo "✅ .aab file copied successfully!"
-            ls -la build/app/outputs/bundle/release/
+          echo "=== Final .aab file verification ==="
+          if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
+            echo "✅ .aab file exists in expected location"
+            echo "File details:"
+            ls -lh build/app/outputs/bundle/release/app-release.aab
+            echo "File size: $(du -h build/app/outputs/bundle/release/app-release.aab | cut -f1)"
           else
-            echo "❌ .aab file not found at android/app/build/outputs/bundle/release/"
+            echo "❌ .aab file still not found in expected location"
             exit 1
           fi
 
@@ -251,7 +297,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-appbundle
-          path: |
-            build/app/outputs/bundle/release/app-release.aab
-            android/app/build/outputs/bundle/release/app-release.aab
-        if: ${{ always() }}
+          path: build/app/outputs/bundle/release/app-release.aab
+        if: success()
