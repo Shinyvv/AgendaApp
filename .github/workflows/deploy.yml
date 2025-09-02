@@ -5,10 +5,10 @@ name: Build, Test, and Deploy
 on:
   push:
     branches:
-      - Desarrollo
+      - production  # Solo despliega cuando hagas push a production
   pull_request:
     branches:
-      - Desarrollo
+      - Desarrollo  # Mantiene los tests en PRs a Desarrollo
 
 jobs:
   test:
@@ -64,7 +64,7 @@ jobs:
     environment: Developing
     env:
       FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-    # This job should only run on push to the main branch, not on pull requests.
+    # This job should only run on push to the production branch, not on pull requests.
     if: github.event_name == 'push'
     steps:
       - name: Checkout repository
